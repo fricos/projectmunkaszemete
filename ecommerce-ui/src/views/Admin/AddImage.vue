@@ -1,0 +1,93 @@
+<template>
+  <div class="container">
+    <div class="row">
+      <div class="col-12 text-center">
+        <h4 class="pt-3">Új kép hozzáadása</h4>
+      </div>
+    </div>
+
+    <div class="row">
+      <div class="col-3"></div>
+      <div class="col-md-6 px-5 px-md-0 pt-5">
+        <div class="form-group">
+          <label for="myfile">Válaszd ki a képet:</label>
+          <input type="file" id="myfile" class="form-control-file" @change="onFileSelected">
+        </div>
+        <button type="button" class="btn btn-info" @click="onUpload">Feltöltés</button>
+      </div>
+      <div class="col-3"></div>
+    </div>
+  </div>
+</template>
+
+<script>
+import axios from "axios";
+import swal from "sweetalert";
+
+export default {
+  data(){
+    return {
+      selectedFile : null
+    }
+  },
+  props : ["baseURL"],
+  methods : {
+    onFileSelected(event){
+      //this will always update the selected file whenever user changes files
+      this.selectedFile = event.target.files[0];
+    },
+    async onUpload(){
+      if(!this.selectedFile) {
+        swal({
+          text: "Válassz egy file-t elsőnek",
+          icon: "warning",
+          closeOnClickOutside: false,
+        });
+        return;
+      }
+      if(this.selectedFile.type !== "image/jpeg" && this.selectedFile.type !== "image/png" &&
+          this.selectedFile.type !== "image/jpg") {
+        //file format is not correct
+        swal({
+          text: "Válasszon egy jpeg/jpg/png képet!",
+          icon: "error",
+          closeOnClickOutside: false,
+        });
+        return;
+      }
+      const formData = new FormData();
+      formData.append('file', this.selectedFile);
+
+      await axios({
+        method: 'post',
+        url: this.baseURL + "fileUpload/",
+        data : formData,
+      })
+          .then(res => {
+            this.$router.push({name : "Gallery"});
+            swal({
+              text: "A kép sikeresen hozzáadva!",
+              icon: "success",
+              closeOnClickOutside: false,
+              res,
+            });
+          })
+          .catch(err => console.log(err))
+    }
+  },
+  mounted() {
+    if (!localStorage.getItem('token')) {
+      this.$router.push({name : 'Signin'});
+    }
+  }
+}
+</script>
+
+<style scoped>
+h4 {
+  font-family: 'Roboto', sans-serif;
+  color: #484848;
+  font-weight: 700;
+}
+
+</style>
